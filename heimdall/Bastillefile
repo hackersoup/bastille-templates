@@ -1,0 +1,26 @@
+# Based on the awesome work of danb35:
+# https://github.com/danb35/freenas-iocage-heimdall/blob/master/heimdall-jail.sh
+# Adapted for Bastille
+
+PKG php82 php82-mbstring php82-zip php82-tokenizer php82-pdo php82-pdo_sqlite php82-filter php82-xml php82-ctype php82-dom php82-fileinfo sqlite3 php82-session caddy
+
+ARG HEIMDALL_FILE="v2.6.3.tar.gz"
+
+CMD mkdir -p /usr/local/www/html
+CP Caddyfile /usr/local/www/
+
+CMD fetch -o /tmp https://github.com/linuxserver/Heimdall/archive/refs/tags/${HEIMDALL_FILE}
+CMD tar zxf /tmp/${HEIMDALL_FILE} --strip 1 -C /usr/local/www/html/
+CMD mkdir -p /usr/local/www/html/storage/app/public/icons
+CMD find /usr/local/www/ -type d -print0 | xargs -0 chmod 2775
+CMD touch /usr/local/www/html/database/app.sqlite
+CMD chmod 664 /usr/local/www/html/database/app.sqlite
+CMD sysrc caddy_user=www caddy_group=www
+CMD sysrc php_fpm_enable=YES
+CMD sysrc caddy_enable=YES
+CMD sysrc caddy_config=/usr/local/www/Caddyfile
+CMD cp /usr/local/www/html/.env.example /usr/local/www/html/.env
+CMD cd /usr/local/www/html/ && php artisan key:generate
+CMD chown -R www:www /usr/local/www/html/
+CMD service php_fpm start
+CMD service caddy start
